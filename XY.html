@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>KAVANA – XY Pad</title>
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      background: radial-gradient(circle at top, #222 0, #050505 55%);
+      color: #eee;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+    }
+    .shell {
+      border-radius: 14px;
+      border: 1px solid #373737;
+      box-shadow: 0 0 18px rgba(0,0,0,0.8), inset 0 0 12px rgba(255,255,255,0.02);
+      background: linear-gradient(145deg, #111 0, #050505 60%, #151515 100%);
+      padding: 16px 18px 16px;
+      max-width: 820px;
+      width: 100%;
+    }
+    h1 {
+      font-size: 20px;
+      margin: 0 0 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+    .sub {
+      font-size: 11px;
+      opacity: 0.7;
+      margin-bottom: 8px;
+    }
+    a.back {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      text-decoration: none;
+      color: #9fe870;
+      opacity: 0.85;
+    }
+    a.back:hover { opacity: 1; }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+      margin-top: 10px;
+    }
+    .panel {
+      flex: 1 1 320px;
+      min-width: 300px;
+    }
+
+    .pad-wrapper {
+      display: flex;
+      justify-content: center;
+    }
+
+    .pad {
+      position: relative;
+      width: 340px;
+      height: 340px;
+      border-radius: 18px;
+      border: 1px solid #444;
+      background:
+        radial-gradient(circle at 0 0, rgba(255,255,255,0.04), transparent 55%),
+        radial-gradient(circle at 100% 100%, rgba(255,255,255,0.04), transparent 55%),
+        radial-gradient(circle at 50% 50%, rgba(159,232,112,0.06), transparent 65%),
+        #050505;
+      box-shadow: inset 0 0 18px rgba(0,0,0,0.9);
+      cursor: crosshair;
+      overflow: hidden;
+    }
+    .pad-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px);
+      background-size: 34px 34px;
+      pointer-events: none;
+    }
+    .pad-label {
+      position: absolute;
+      font-size: 10px;
+      opacity: 0.7;
+      pointer-events: none;
+    }
+    .pad-label.tl { top: 6px; left: 10px; }
+    .pad-label.tr { top: 6px; right: 10px; text-align: right; }
+    .pad-label.bl { bottom: 6px; left: 10px; }
+    .pad-label.br { bottom: 6px; right: 10px; text-align: right; }
+
+    .dot {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 1px solid #000;
+      background: #9fe870;
+      box-shadow: 0 0 10px rgba(159,232,112,0.9);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .field-label {
+      font-size: 11px;
+      margin: 4px 0;
+      opacity: 0.8;
+    }
+    .coords {
+      font-size: 11px;
+      opacity: 0.75;
+      margin-bottom: 4px;
+    }
+    .preset-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 4px 0 8px;
+    }
+    .preset-btn {
+      border-radius: 999px;
+      border: 1px solid #444;
+      background: radial-gradient(circle at top, #303030 0, #181818 60%);
+      padding: 3px 9px;
+      font-size: 10px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      opacity: 0.9;
+      transition: all .12s ease-out;
+    }
+    .preset-btn:hover {
+      border-color: #9fe870;
+      box-shadow: 0 0 8px rgba(159,232,112,0.25);
+      opacity: 1;
+    }
+    .preset-btn:active {
+      transform: translateY(1px);
+      box-shadow: 0 0 4px rgba(159,232,112,0.4) inset;
+    }
+    .preset-btn.active {
+      border-color: #9fe870;
+      box-shadow: 0 0 8px rgba(159,232,112,0.4);
+    }
+
+    textarea {
+      width: 100%;
+      background: #050505;
+      color: #eee;
+      border-radius: 8px;
+      border: 1px solid #333;
+      padding: 8px;
+      font-family: inherit;
+      font-size: 12px;
+      resize: vertical;
+      min-height: 140px;
+      box-shadow: inset 0 0 8px rgba(0,0,0,0.9);
+    }
+    textarea:focus {
+      outline: none;
+      border-color: #9fe870;
+      box-shadow: 0 0 10px rgba(159,232,112,0.35), inset 0 0 8px rgba(0,0,0,0.9);
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+      <div>
+        <h1>KAVANA – XY Pad</h1>
+        <div class="sub">Chaos-style 2D intent controller: Clean ↔ Dirty, Chill ↔ Intense.</div>
+      </div>
+      <div style="text-align:right;">
+        <a href="index.html" class="back">← BACK TO FADERS</a>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="panel">
+        <div class="pad-wrapper">
+          <div class="pad" id="pad">
+            <div class="pad-grid"></div>
+            <div class="pad-label tl">Clean / Chill</div>
+            <div class="pad-label tr">Dirty / Chill</div>
+            <div class="pad-label bl">Clean / Intense</div>
+            <div class="pad-label br">Dirty / Intense</div>
+            <div class="dot" id="dot"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="field-label">Presets:</div>
+        <div class="preset-bar" id="presetBar"></div>
+
+        <div class="coords" id="coords"></div>
+
+        <div class="field-label">Generated short prompt:</div>
+        <textarea id="prompt"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const pad = document.getElementById('pad');
+    const dot = document.getElementById('dot');
+    const coordsEl = document.getElementById('coords');
+    const promptEl = document.getElementById('prompt');
+    const presetBar = document.getElementById('presetBar');
+
+    const presets = [
+      {
+        id: "clean_ambient",
+        name: "Clean Ambient Drift",
+        x: 0.15, y: 0.20,
+        flavor: "clean, spacious, slow-moving, gentle and cinematic",
+        style: "ambient / modern score"
+      },
+      {
+        id: "lofi_warm",
+        name: "Lo-Fi Warm Dust",
+        x: 0.78, y: 0.28,
+        flavor: "warm, nostalgic, slightly detuned, vinyl-textured",
+        style: "lo-fi, trip-hop, downtempo"
+      },
+      {
+        id: "cinematic_tension",
+        name: "Cinematic Tension",
+        x: 0.28, y: 0.82,
+        flavor: "clean but tense, evolving, dramatic and focused",
+        style: "hybrid orchestral / synth score"
+      },
+      {
+        id: "darkwave_pulse",
+        name: "Darkwave Pulse",
+        x: 0.82, y: 0.78,
+        flavor: "dark, pulsing, saturated, shadowy and driving",
+        style: "darkwave / electro / goth"
+      },
+      {
+        id: "industrial_grind",
+        name: "Industrial Grind",
+        x: 0.92, y: 0.92,
+        flavor: "metallic, noisy, aggressive, distorted and relentless",
+        style: "industrial / EBM / harsh techno"
+      },
+      {
+        id: "analog_tape",
+        name: "Analog Tape Haze",
+        x: 0.65, y: 0.40,
+        flavor: "soft, slightly wobbly, tape-saturated and hazy",
+        style: "analog-inspired, mellow groove"
+      },
+      {
+        id: "cosmic_chill",
+        name: "Cosmic Chill",
+        x: 0.30, y: 0.35,
+        flavor: "dreamy, floating, gently evolving, spaced-out",
+        style: "space ambient / chillout"
+      },
+      {
+        id: "hybrid_electro",
+        name: "Modern Hybrid Electro",
+        x: 0.55, y: 0.70,
+        flavor: "tight, punchy, modern, rhythm-focused",
+        style: "hybrid electronic / modern scoring"
+      }
+    ];
+
+    let activePresetId = null;
+
+    function clamp(v, min, max) {
+      return v < min ? min : v > max ? max : v;
+    }
+
+    function describeZone(x, y) {
+      if (x < 0.5 && y < 0.5) return "clean, calm, cinematic / ambient zone";
+      if (x >= 0.5 && y < 0.5) return "dusty, lo-fi, chilled downtempo zone";
+      if (x < 0.5 && y >= 0.5) return "clean but intense, score / synthwave zone";
+      return "dirty, high-energy, industrial / darkwave zone";
+    }
+
+    function basePromptFromXY(x, y) {
+      const dirty = x;
+      const intense = y;
+
+      let texture, drive, tone, style;
+
+      if (dirty < 0.33)      texture = "clean and smooth";
+      else if (dirty < 0.66) texture = "slightly saturated and textured";
+      else                   texture = "gritty, distorted and noisy";
+
+      if (intense < 0.33)      drive = "very laid-back and slow-burn";
+      else if (intense < 0.66) drive = "steady, mid-tempo and driving";
+      else                     drive = "high-energy, aggressive and urgent";
+
+      if (x < 0.5 && y < 0.5) {
+        tone = "warm, cinematic and introspective";
+        style = "ambient / modern score";
+      } else if (x >= 0.5 && y < 0.5) {
+        tone = "dusty, nostalgic and mellow";
+        style = "lo-fi, trip-hop, downtempo";
+      } else if (x < 0.5 && y >= 0.5) {
+        tone = "sharp, focused and dramatic";
+        style = "synthwave / hybrid score";
+      } else {
+        tone = "dark, tense and industrial";
+        style = "darkwave, industrial, techno-inspired";
+      }
+
+      return { texture, drive, tone, style };
+    }
+
+    function buildPrompt(x, y, preset) {
+      const base = basePromptFromXY(x, y);
+
+      const flavor = preset?.flavor || `${base.texture}, ${base.tone}`;
+      const style  = preset?.style  || base.style;
+      const name   = preset?.name   || null;
+
+      const titleLine = name ? `${name}:\n` : "";
+
+      return (
+`${titleLine}Short prompt:
+
+${base.drive} track with ${flavor}.
+Style: ${style}.
+
+Emphasis on mood and atmosphere rather than lyrics.
+Suitable for AI music engines like Suno / Udio / Stable Audio.`
+      );
+    }
+
+    function updateFromXY(nx, ny, presetId = null) {
+      nx = clamp(nx, 0, 1);
+      ny = clamp(ny, 0, 1);
+
+      dot.style.left = `${nx * 100}%`;
+      dot.style.top  = `${ny * 100}%`;
+
+      const zone = describeZone(nx, ny);
+      const preset = presets.find(p => p.id === presetId) || null;
+      activePresetId = presetId;
+
+      coordsEl.textContent = `X: ${nx.toFixed(2)}  Y: ${ny.toFixed(2)}  →  ${zone}`;
+      promptEl.value = buildPrompt(nx, ny, preset);
+
+      // подсветка активного пресета
+      Array.from(presetBar.querySelectorAll(".preset-btn")).forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.id === presetId);
+      });
+    }
+
+    function handlePointer(ev) {
+      const rect = pad.getBoundingClientRect();
+      const x = (ev.clientX - rect.left) / rect.width;
+      const y = (ev.clientY - rect.top) / rect.height;
+      updateFromXY(x, y, null); // при ручном таскании снимаем preset highlight
+    }
+
+    let dragging = false;
+
+    pad.addEventListener('mousedown', ev => {
+      dragging = true;
+      handlePointer(ev);
+    });
+    window.addEventListener('mousemove', ev => {
+      if (!dragging) return;
+      handlePointer(ev);
+    });
+    window.addEventListener('mouseup', () => { dragging = false; });
+
+    pad.addEventListener('touchstart', ev => {
+      dragging = true;
+      handlePointer(ev.touches[0]);
+      ev.preventDefault();
+    }, {passive:false});
+    pad.addEventListener('touchmove', ev => {
+      if (!dragging) return;
+      handlePointer(ev.touches[0]);
+      ev.preventDefault();
+    }, {passive:false});
+    pad.addEventListener('touchend', () => { dragging = false; });
+
+    // отрисовать кнопки пресетов
+    presets.forEach(p => {
+      const btn = document.createElement("button");
+      btn.className = "preset-btn";
+      btn.textContent = p.name;
+      btn.dataset.id = p.id;
+      btn.addEventListener("click", () => {
+        updateFromXY(p.x, p.y, p.id);
+      });
+      presetBar.appendChild(btn);
+    });
+
+    // стартовая точка – что-то между Cosmic Chill и Hybrid Electro
+    updateFromXY(0.35, 0.55, null);
+  </script>
+</body>
+</html>

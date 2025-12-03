@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Prompt EQ – Intent Shaper v0.2</title>
+  <title>Prompt EQ – Intent Shaper v0.2 (KAVANA)</title>
   <style>
     :root {
       color-scheme: dark;
@@ -182,16 +182,40 @@
       opacity: 0.65;
       margin-top: 2px;
     }
+    .xy-link {
+      display: inline-block;
+      margin-top: 8px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid #444;
+      background: radial-gradient(circle at top, #2b2b2b 0, #161616 60%);
+      text-decoration: none;
+      color: #9fe870;
+      opacity: 0.9;
+      transition: all .12s ease-out;
+    }
+    .xy-link:hover {
+      border-color: #9fe870;
+      box-shadow: 0 0 8px rgba(159,232,112,0.3);
+      opacity: 1;
+    }
+    .xy-link:active {
+      transform: translateY(1px);
+      box-shadow: 0 0 4px rgba(159,232,112,0.4) inset;
+    }
   </style>
 </head>
 <body>
   <div class="shell">
     <div class="header-bar">
       <div>
-        <h1>Prompt EQ – Intent Shaper v0.2</h1>
+        <h1>Prompt EQ – Intent Shaper v0.2 (KAVANA)</h1>
         <div class="sub">Multidimensional prompt sculptor for AI music engines</div>
       </div>
-      <div>
+      <div style="text-align:right;">
         <div class="label">Target Engine</div>
         <select id="engineSelect">
           <option value="generic">Generic / Any</option>
@@ -202,6 +226,7 @@
           <option value="aiva">AIVA / cinematic generator</option>
         </select>
         <div class="engine-tag" id="engineHint"></div>
+        <a href="xy.html" class="xy-link">XY PAD</a>
       </div>
     </div>
 
@@ -369,7 +394,6 @@
         "huge, immersive, atmospheric space"
       ]);
 
-      // Engine-specific wrappers
       let enginePrefix = "";
       let engineTags = "";
 
@@ -436,7 +460,7 @@ ${styleLine}`;
       input.value = param.value;
       input.addEventListener("input", () => {
         state[param.key] = Number(input.value);
-        valueSpan.textContent = input.value;
+        valueSpan.textContent = state[param.key];
         renderJSON();
       });
       block.appendChild(input);
@@ -451,7 +475,6 @@ ${styleLine}`;
 
     params.forEach(createSlider);
 
-    // Presets
     const presets = {
       cinematic_sad: {
         energy: 45, emotion: -60, complexity: 70, clarity: 20,
@@ -467,7 +490,7 @@ ${styleLine}`;
       },
       lofi_intimate: {
         energy: 35, emotion: 10, complexity: 35, clarity: -30,
-        rhythm_tight: 45, harmony_tension: 25, warmth: 40,
+        rhythm_tight: 45, harmony_tight: 45, harmony_tension: 25, warmth: 40,
         vintage_modern: -20, vocal_morph: 40, narrative_arc: 45,
         texture: 55, space: 35
       },
@@ -495,7 +518,6 @@ ${styleLine}`;
             state[param.key] = v;
           }
         });
-        // обновить слайдеры визуально
         const inputs = slidersContainer.querySelectorAll("input[type=range]");
         inputs.forEach((input, idx) => {
           const param = params[idx];
