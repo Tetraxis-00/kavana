@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Prompt EQ – Intent Shaper v0.2</title>
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+    body {
+      background: radial-gradient(circle at top, #222 0, #050505 55%);
+      color: #eee;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    h1 {
+      font-size: 20px;
+      margin: 0 0 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #f5f5f5;
+    }
+    .sub {
+      font-size: 11px;
+      opacity: 0.7;
+      margin-bottom: 6px;
+    }
+    .shell {
+      border-radius: 14px;
+      border: 1px solid #373737;
+      box-shadow: 0 0 18px rgba(0,0,0,0.8), inset 0 0 12px rgba(255,255,255,0.02);
+      background: linear-gradient(145deg, #111 0, #050505 60%, #151515 100%);
+      padding: 16px 18px 14px;
+    }
+    .row {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+    .panel {
+      flex: 1 1 340px;
+      min-width: 330px;
+    }
+    .header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      opacity: 0.75;
+    }
+    select {
+      background: #171717;
+      color: #eee;
+      border-radius: 999px;
+      border: 1px solid #444;
+      padding: 4px 10px;
+      font-size: 11px;
+      outline: none;
+    }
+    .preset-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 6px 0 2px;
+    }
+    .preset-btn {
+      border-radius: 999px;
+      border: 1px solid #444;
+      background: radial-gradient(circle at top, #303030 0, #181818 60%);
+      padding: 4px 10px;
+      font-size: 11px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      opacity: 0.9;
+      transition: all .12s ease-out;
+    }
+    .preset-btn:hover {
+      border-color: #88ff88;
+      box-shadow: 0 0 8px rgba(136,255,136,0.25);
+      opacity: 1;
+    }
+    .preset-btn:active {
+      transform: translateY(1px);
+      box-shadow: 0 0 4px rgba(136,255,136,0.4) inset;
+    }
+
+    .container {
+      display: flex;
+      gap: 14px;
+      align-items: flex-end;
+      overflow-x: auto;
+      padding: 8px 2px 6px;
+    }
+    .slider-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 62px;
+    }
+    .slider-block label {
+      font-size: 9px;
+      text-align: center;
+      margin-bottom: 5px;
+      line-height: 1.25;
+      opacity: 0.8;
+    }
+    .slider-block input[type="range"] {
+      writing-mode: bt-lr; /* Firefox */
+      -webkit-appearance: slider-vertical;
+      width: 40px;
+      height: 200px;
+      background: transparent;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: #9fe870;
+      border: 1px solid #000;
+      box-shadow: 0 0 6px rgba(159,232,112,0.7);
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-runnable-track {
+      background: linear-gradient(to top, #222, #555);
+      border-radius: 999px;
+      border: 1px solid #444;
+    }
+    .value {
+      font-size: 10px;
+      margin-top: 3px;
+      color: #9fe870;
+    }
+    textarea {
+      width: 100%;
+      background: #050505;
+      color: #eee;
+      border-radius: 8px;
+      border: 1px solid #333;
+      padding: 8px;
+      font-family: inherit;
+      font-size: 12px;
+      resize: vertical;
+      min-height: 110px;
+      box-shadow: inset 0 0 8px rgba(0,0,0,0.9);
+    }
+    textarea:focus {
+      outline: none;
+      border-color: #9fe870;
+      box-shadow: 0 0 10px rgba(159,232,112,0.35), inset 0 0 8px rgba(0,0,0,0.9);
+    }
+    #json {
+      background: #020202;
+      border-radius: 8px;
+      border: 1px solid #333;
+      padding: 8px;
+      font-family: monospace;
+      font-size: 11px;
+      white-space: pre;
+      max-height: 220px;
+      overflow: auto;
+      box-shadow: inset 0 0 8px rgba(0,0,0,0.9);
+    }
+    .field-label {
+      font-size: 11px;
+      margin: 4px 0 4px;
+      opacity: 0.8;
+    }
+    .engine-tag {
+      font-size: 10px;
+      opacity: 0.65;
+      margin-top: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="header-bar">
+      <div>
+        <h1>Prompt EQ – Intent Shaper v0.2</h1>
+        <div class="sub">Multidimensional prompt sculptor for AI music engines</div>
+      </div>
+      <div>
+        <div class="label">Target Engine</div>
+        <select id="engineSelect">
+          <option value="generic">Generic / Any</option>
+          <option value="suno">Suno</option>
+          <option value="udio">Udio</option>
+          <option value="stable">Stable Audio</option>
+          <option value="musicfx">MusicFX / MusicLM-like</option>
+          <option value="aiva">AIVA / cinematic generator</option>
+        </select>
+        <div class="engine-tag" id="engineHint"></div>
+      </div>
+    </div>
+
+    <div class="preset-bar">
+      <span class="label">Presets:</span>
+      <button class="preset-btn" data-preset="cinematic_sad">Cinematic Sad</button>
+      <button class="preset-btn" data-preset="epic_uplift">Epic Uplift</button>
+      <button class="preset-btn" data-preset="lofi_intimate">Lo-Fi Intimate</button>
+      <button class="preset-btn" data-preset="darkwave">Darkwave / Industrial</button>
+      <button class="preset-btn" data-preset="minimal_drone">Minimal Drone</button>
+    </div>
+
+    <div class="row">
+      <div class="panel">
+        <div class="container" id="sliders"></div>
+      </div>
+      <div class="panel">
+        <div class="field-label">Auto-generated text prompt (copy → AI engine, then tweak wording as needed):</div>
+        <textarea id="autoPrompt"></textarea>
+
+        <div class="field-label" style="margin-top:8px;">Intent vector (for API / future automation):</div>
+        <pre id="json"></pre>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const engineSelect = document.getElementById("engineSelect");
+    const engineHint = document.getElementById("engineHint");
+    const autoPromptEl = document.getElementById("autoPrompt");
+    const jsonEl = document.getElementById("json");
+    const slidersContainer = document.getElementById("sliders");
+
+    const engineHints = {
+      generic: "Neutral phrasing, good for any text-based AI music model.",
+      suno: "Optimized for Suno: clear style/emotion tags, narrative hints.",
+      udio: "Udio-friendly phrasing with descriptive mood and structure.",
+      stable: "Stable Audio / diffusion-like: focus on texture and atmosphere.",
+      musicfx: "MusicFX / MusicLM: concise style description, mood + genre.",
+      aiva: "AIVA / cinematic: score-like, thematic and orchestral hints."
+    };
+
+    const params = [
+      { key: "energy",          label: "Energy",           min: 0,   max: 100, value: 60 },
+      { key: "emotion",         label: "Emotion\n(- sad / + joy)", min: -100,max: 100, value: 0 },
+      { key: "complexity",      label: "Complexity",       min: 0,   max: 100, value: 40 },
+      { key: "clarity",         label: "Clarity\n(0 dense)", min: -100,max: 100, value: 0 },
+      { key: "rhythm_tight",    label: "Rhythm\n(loose→tight)", min: 0,max: 100, value: 50 },
+      { key: "harmony_tension", label: "Harmony\n(tension)", min: 0,max: 100, value: 30 },
+      { key: "warmth",          label: "Warmth\n(cold→warm)", min: -100,max: 100, value: 10 },
+      { key: "vintage_modern",  label: "Vintage\n← → Modern", min: -100,max: 100, value: 20 },
+      { key: "vocal_morph",     label: "Vocal\nAI-morph",   min: 0,   max: 100, value: 70 },
+      { key: "narrative_arc",   label: "Narrative\n(flat→climax)", min: 0,max: 100, value: 65 },
+      { key: "texture",         label: "Texture\n(smooth→noisy)", min: 0,max: 100, value: 30 },
+      { key: "space",           label: "Space\n(dry→wet)",  min: 0,   max: 100, value: 40 }
+    ];
+
+    const state = {};
+    function mapRange(v, a, b, labels) {
+      const t = (v - a) / (b - a);
+      if (t <= 0.2) return labels[0];
+      if (t <= 0.4) return labels[1];
+      if (t <= 0.6) return labels[2];
+      if (t <= 0.8) return labels[3];
+      return labels[4];
+    }
+
+    function buildPrompt() {
+      const s = state;
+      const engine = engineSelect.value;
+
+      const energy = mapRange(s.energy, 0, 100, [
+        "very soft, almost whispered",
+        "gentle and laid-back",
+        "moderate, steady energy",
+        "driving and intense",
+        "explosive, high-energy"
+      ]);
+
+      const emotion = mapRange(s.emotion, -100, 100, [
+        "deeply melancholic",
+        "bittersweet and reflective",
+        "emotionally neutral, focused",
+        "hopeful and uplifting",
+        "euphoric and ecstatic"
+      ]);
+
+      const complexity = mapRange(s.complexity, 0, 100, [
+        "minimalist arrangement",
+        "sparse but nuanced arrangement",
+        "moderately layered arrangement",
+        "rich, multi-layered arrangement",
+        "dense, highly detailed arrangement"
+      ]);
+
+      const clarity = mapRange(s.clarity, -100, 100, [
+        "very hazy and blurred mix",
+        "slightly soft and lo-fi",
+        "balanced clarity",
+        "clean and well defined",
+        "ultra-clear, hi-fi precision"
+      ]);
+
+      const rhythm = mapRange(s.rhythm_tight, 0, 100, [
+        "very loose, human and unquantized groove",
+        "laid-back groove with slight imperfections",
+        "balanced, natural timing",
+        "tight and precise rhythm",
+        "extremely tight, almost mechanical groove"
+      ]);
+
+      const tension = mapRange(s.harmony_tension, 0, 100, [
+        "mostly consonant, safe harmony",
+        "gentle harmonic tension",
+        "balanced tension and resolution",
+        "noticeable dissonance and suspense",
+        "highly tense, experimental harmony"
+      ]);
+
+      const warmth = mapRange(s.warmth, -100, 100, [
+        "very cold and clinical tone",
+        "slightly cool, modern tone",
+        "balanced spectral warmth",
+        "warm and rounded tone",
+        "very warm, almost analog glow"
+      ]);
+
+      const vintageModern = mapRange(s.vintage_modern, -100, 100, [
+        "strongly vintage, old-school aesthetic",
+        "subtly retro-inspired aesthetic",
+        "blend of vintage and modern",
+        "clean contemporary sound",
+        "hyper-modern, futuristic sound"
+      ]);
+
+      const vocalMorph = mapRange(s.vocal_morph, 0, 100, [
+        "very natural, almost raw vocal",
+        "slightly enhanced but still natural vocal",
+        "noticeably improved, polished vocal",
+        "strongly stylized AI-enhanced vocal",
+        "heavily stylized, character-like AI vocal"
+      ]);
+
+      const narrativeArc = mapRange(s.narrative_arc, 0, 100, [
+        "almost flat, meditative structure",
+        "gentle build with mild lift",
+        "clear verse–chorus dynamics",
+        "strong build-up with a clear climax",
+        "dramatic arc with powerful climax and release"
+      ]);
+
+      const texture = mapRange(s.texture, 0, 100, [
+        "very smooth, clean texture",
+        "mostly smooth with light details",
+        "balanced texture with some grit",
+        "noticeable grain and sound design elements",
+        "heavily textured, noisy and experimental"
+      ]);
+
+      const space = mapRange(s.space, 0, 100, [
+        "very dry and intimate",
+        "mostly dry with subtle ambience",
+        "balanced sense of space",
+        "clearly spacious and reverberant",
+        "huge, immersive, atmospheric space"
+      ]);
+
+      // Engine-specific wrappers
+      let enginePrefix = "";
+      let engineTags = "";
+
+      if (engine === "suno") {
+        enginePrefix = "high quality, detailed, emotional, cinematic, ";
+        engineTags = "#cinematic #soundtrack #emotional ";
+      } else if (engine === "udio") {
+        enginePrefix = "rich, expressive, production-ready, ";
+      } else if (engine === "stable") {
+        enginePrefix = "atmospheric, textural, evolving soundscape, ";
+      } else if (engine === "musicfx") {
+        enginePrefix = "short prompt, strong style, ";
+      } else if (engine === "aiva") {
+        enginePrefix = "orchestral, thematic, cinematic score, ";
+      }
+
+      const core =
+`Create a ${energy}, ${emotion} track with a ${complexity}, ${texture} and ${space} soundstage.
+
+The mix should have ${clarity}, with ${rhythm}, and ${tension}.
+Use a ${warmth} and ${vintageModern} overall tone.
+
+Vocal: ${vocalMorph}.
+Structure: ${narrativeArc}.`;
+
+      let styleLine = "Style: modern cinematic / electronic hybrid, suitable for emotional storytelling and immersive listening.";
+
+      if (engine === "aiva") {
+        styleLine = "Style: cinematic score, evolving themes, suitable for film / series / emotional storytelling.";
+      } else if (engine === "stable") {
+        styleLine = "Style: atmospheric, ambient / experimental soundscape.";
+      } else if (engine === "musicfx") {
+        styleLine = "Style: compact, genre-focused description: e.g. dark electronic, melancholic, atmospheric.";
+      }
+
+      const result =
+`${engineTags}${enginePrefix}${core}
+
+${styleLine}`;
+
+      autoPromptEl.value = result.trim();
+    }
+
+    function renderJSON() {
+      const payload = { intent_vector: { ...state }, engine: engineSelect.value };
+      jsonEl.textContent = JSON.stringify(payload, null, 2);
+      buildPrompt();
+    }
+
+    function createSlider(param) {
+      state[param.key] = param.value;
+
+      const block = document.createElement("div");
+      block.className = "slider-block";
+
+      const label = document.createElement("label");
+      label.textContent = param.label;
+      block.appendChild(label);
+
+      const input = document.createElement("input");
+      input.type = "range";
+      input.min = param.min;
+      input.max = param.max;
+      input.value = param.value;
+      input.addEventListener("input", () => {
+        state[param.key] = Number(input.value);
+        valueSpan.textContent = input.value;
+        renderJSON();
+      });
+      block.appendChild(input);
+
+      const valueSpan = document.createElement("div");
+      valueSpan.className = "value";
+      valueSpan.textContent = param.value;
+      block.appendChild(valueSpan);
+
+      slidersContainer.appendChild(block);
+    }
+
+    params.forEach(createSlider);
+
+    // Presets
+    const presets = {
+      cinematic_sad: {
+        energy: 45, emotion: -60, complexity: 70, clarity: 20,
+        rhythm_tight: 40, harmony_tension: 55, warmth: 25,
+        vintage_modern: -10, vocal_morph: 55, narrative_arc: 80,
+        texture: 35, space: 80
+      },
+      epic_uplift: {
+        energy: 85, emotion: 70, complexity: 80, clarity: 40,
+        rhythm_tight: 80, harmony_tension: 60, warmth: 35,
+        vintage_modern: 30, vocal_morph: 75, narrative_arc: 90,
+        texture: 45, space: 85
+      },
+      lofi_intimate: {
+        energy: 35, emotion: 10, complexity: 35, clarity: -30,
+        rhythm_tight: 45, harmony_tension: 25, warmth: 40,
+        vintage_modern: -20, vocal_morph: 40, narrative_arc: 45,
+        texture: 55, space: 35
+      },
+      darkwave: {
+        energy: 70, emotion: -20, complexity: 60, clarity: -5,
+        rhythm_tight: 75, harmony_tension: 70, warmth: -10,
+        vintage_modern: 40, vocal_morph: 80, narrative_arc: 70,
+        texture: 75, space: 60
+      },
+      minimal_drone: {
+        energy: 25, emotion: -10, complexity: 15, clarity: 10,
+        rhythm_tight: 20, harmony_tension: 35, warmth: 5,
+        vintage_modern: 10, vocal_morph: 0, narrative_arc: 30,
+        texture: 65, space: 75
+      }
+    };
+
+    document.querySelectorAll(".preset-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const p = presets[btn.dataset.preset];
+        if (!p) return;
+        params.forEach(param => {
+          const v = p[param.key];
+          if (typeof v === "number") {
+            state[param.key] = v;
+          }
+        });
+        // обновить слайдеры визуально
+        const inputs = slidersContainer.querySelectorAll("input[type=range]");
+        inputs.forEach((input, idx) => {
+          const param = params[idx];
+          input.value = state[param.key];
+          const valueSpan = input.parentElement.querySelector(".value");
+          if (valueSpan) valueSpan.textContent = state[param.key];
+        });
+        renderJSON();
+      });
+    });
+
+    engineSelect.addEventListener("change", () => {
+      engineHint.textContent = engineHints[engineSelect.value] || "";
+      renderJSON();
+    });
+
+    engineHint.textContent = engineHints[engineSelect.value] || "";
+    renderJSON();
+  </script>
+</body>
+</html>
